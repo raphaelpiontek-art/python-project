@@ -32,9 +32,12 @@ def minimum_variance(prices: pd.DataFrame) -> dict:
     centred_returns = returns - mean_returns
     #matrix
     T = len(returns)
-    cov_matrix = (centred_returns.T @ centred_returns) / (T - 1) 
+    cov_matrix = (centred_returns.T @ centred_returns) / (T - 1)
+    cov_matrix_annual = cov_matrix * 252 #annualization
+
     def portfolio_variance(w):
-        return w @ cov_matrix @ w
+        return w @ cov_matrix_annual @ w
+    
     # constraints and bounds:
     n = len(tickers)
     constraints = {"type": "eq", "fun": lambda w: np.sum(w) - 1} #weights must sum to 1
@@ -60,7 +63,7 @@ def max_return_min_weight(prices: pd.DataFrame, min_weight: float = 0.05) -> dic
     bounds      = [(min_weight, 1.0)] * n # minimum weight constraint
     w0          = np.ones(n) / n 
     # optimization using scipy
-    result = minimize(neg_return, w0, method="SLSQP", bounds=bounds, constraints=constraints)
+    result = minimize(negative_return, w0, method="SLSQP", bounds=bounds, constraints=constraints)
     return {ticker: weight for ticker, weight in zip(tickers, result.x)}
     
     

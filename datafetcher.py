@@ -2,6 +2,39 @@
 # import of packages
 import yfinance as yf
 import pandas as pd
+import requests
+
+#converting ISIN's to tickers using requests to the OpenFIGI API
+def isin_converter(isin: str ) -> str:
+    # starting the conversion process by sending a POST request to the OpenFIGI API with the ISIN as the identifier
+    url     = "https://api.openfigi.com/v3/mapping"
+    headers = {"Content-Type": "application/json"}
+    payload = [{"idType": "ID_ISIN", "idValue": isin}]
+    
+    try: 
+        response = requests.post(url, json=payload, headers=headers)
+        data = response.json()
+
+        if data and "data" in data[0] and len(data[0]["data"]) > 0:
+            for item in data[0]["data"]:
+                if item.get("exchCode") == "UW":
+                     return item["ticker"]
+        else:
+            return None
+    except Exception as e:
+        print(f"Error converting ISIN {isin}: {e}")
+        return None
+
+def convert_isins_to_tickers(isins: list) -> list:
+    # isins: List of ISINs to be converted
+    # returns List of corresponding tickers, None for ISINs that could not be converted.
+    tickers = []
+    for isin in isins:
+        ticker = isin_converter(isin)
+        tickers.append(ticker)
+    return tickers
+
+
 #fetching historical prices for gicen tickers and time period
 def fetch_prices(tickers: list, start_date: str, end_date: str) -> pd.DataFrame:
     # tickers: List of tickers 

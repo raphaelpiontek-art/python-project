@@ -45,6 +45,7 @@ def fetch_prices(tickers: list, start_date: str, end_date: str) -> pd.DataFrame:
     # auto_adjust=True uses split/dividend adjusted prices
     data = yf.download(tickers, start=start_date, end=end_date, auto_adjust=True, progress=False)
     prices = data["Close"]
+
     prices.dropna(how="any", inplace=True)
 
     return prices

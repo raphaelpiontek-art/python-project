@@ -45,8 +45,14 @@ def fetch_prices(tickers: list, start_date: str, end_date: str) -> pd.DataFrame:
     # auto_adjust=True uses split/dividend adjusted prices
     data = yf.download(tickers, start=start_date, end=end_date, auto_adjust=True, progress=False)
     prices = data["Close"]
+    # drop rows where all prices are NaN, then fill remaining NaN values using forward fill and backward fill
+    prices.dropna(how="all", inplace=True)
 
-    prices.dropna(how="any", inplace=True)
+    prices.ffill(inplace=True)
+
+    prices.bfill(inplace=True)
+    
+
 
     return prices
 
@@ -63,4 +69,35 @@ def fetch_benchmark(start: str, end: str) -> pd.Series:
     data = yf.download("URTH", start=start, end=end, auto_adjust=True, progress=False)
     return data["Close"].squeeze()
     # squeeze() converts the DataFrame to a Series if it has only one column, which is the case for the benchmark.
+
+# function to covnert prices into Euros
+def convert_prices_to_Euro(prices: pd.DataFrame, tickers: list, start_date: str, end_date: str) -> pd.DataFrame:
+    # copy the original prices
+    prices_euro = prices.copy()
+
+    for ticker in tickers:
+        # fetch the currency for the ticker
+        currency = yf.Ticker(ticker).info.get("currency", "USD")  # Set currency to usd if not available
+        if currency == "EUR":
+            continue  
+        
+        # Set the exchange rate ticker based on the currency
+        fx_ticker = f"{currency}EUR=X"
+
+        # Fetch the exchange rate data for the specified period
+        fx_data = yf.download(fx_ticker, start=start_date, end=end_date, auto_adjust=True, progress=False) 
+        fx_rate = fx_data["Close"]
+        if isinstance(fx_rate, pd.DataFrame):
+            fx_rate = fx_rate.iloc[:,0] # if multiple columns, take the first one
+        else:
+            fx_rate = fx_rate.squeeze() # if its a DataFrame with one column, convert to Series
+
+        # reindex the exchange rate to match the prices DataFrame , ffill fills missing values using forward fill method
+        fx_rate = fx_rate.reindex(prices.index).ffill().bfill()
+
+        # multiply the original prices by the exchange rate to convert to Euros
+        prices_euro[ticker] = prices_euro[ticker] * fx_rate
+    return prices_euro
+
+
 

@@ -86,6 +86,20 @@ while True:
         continue   
     break   # if dates don't have errors break the loop
 
+# we demand the user how much he wants to invest in his portfolio
+while True:
+    try:
+        investment_amount = float(input("How much you want to invest in your portfolio (EUR)?: "))
+        if investment_amount <= 0:
+            print(f"{RED}Investment amount must be larger than 0{RESET}")
+            continue
+        break
+    except ValueError:
+        print(f"{RED}Invalid input, please enter a value larger than 0{RESET}")
+        continue
+# We set up assumed transaction costs for trades
+Transaction_fee = 0.001
+
 print("We personally curated 4 types of portfolios strategies for you. Please select your choosen strategy with the number given in the brackets")
 
 #we do a loop, so the process repeats, even if the user input is wrong
@@ -146,7 +160,15 @@ print(f"{GREEN}Your portfolio weights are equal to: {portfolio_weights}{RESET}")
 #calculate some key statistics
 
 #the mean of the given portfolio
-prices = fetch_prices(portfolio, start_date, end_date)
+prices_local = fetch_prices(portfolio, start_date, end_date)
+# check for tickers with missing data in the selected period
+missing_data = [t for t in portfolio if prices_local[t].isna().any()]
+if missing_data:
+    print(f"{RED}Error: the following tickers have no data for the selected period: {missing_data}")
+    print(f"Please restart and choose a different period or remove these tickers.{RESET}")
+    exit()
+
+prices = convert_prices_to_Euro(prices_local, portfolio, start_date, end_date)
 values = prices.values
 returns = (values[1:] - values[:-1]) / values[:-1]
 mean_returns = np.mean(returns, axis=0) * 252
@@ -196,6 +218,30 @@ plt.xlabel("Date")
 plt.ylabel("Indexed Value (Base 100)")
 plt.legend()
 plt.show()
+
+# build the investment table
+
+table = pd.DataFrame(list(portfolio_weights.items()), columns=["Ticker", "Weight"])
+table["Investment Amount (EUR)"] = table["Weight"] * investment_amount
+table["Transaction Cost (EUR)"] = table["Investment Amount (EUR)"] * Transaction_fee
+table["net Investment (EUR)"] = table["Investment Amount (EUR)"] - table["Transaction Cost (EUR)"]
+table["Start Price"] = [prices[t].iloc[0] for t in table["Ticker"]]
+table["End Price"] = [prices[t].iloc[-1] for t in table["Ticker"]]
+table["Shares"] = table["net Investment (EUR)"] / table["Start Price"]
+table["Final Value (EUR)"] = table["Shares"] * table["End Price"]
+
+print(table.to_string(index=False))
+
+# Summary Table
+
+total_investment = table["Investment Amount (EUR)"].sum()
+final_portfolio_value = table["Final Value (EUR)"].sum()
+Profit = final_portfolio_value - total_investment
+   
+print(f"Total Investment: {total_investment:.2f} EUR")
+print(f"Final Portfolio Value: {final_portfolio_value:.2f} EUR")
+print(f"Profit/Loss: {Profit:.2f} EUR")
+      
 # restart the programm if the user wants to create another portfolio
 while True:
     restart = input("Do you want to create another portfolio? (YES/NO): ")
@@ -207,3 +253,4 @@ while True:
         break
     else:
           print(f"{RED}Invalid input, please type yes or no{RESET}")
+

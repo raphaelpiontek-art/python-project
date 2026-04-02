@@ -138,6 +138,7 @@ while True:
         print(f"{RED} Wrong input, pls try again{RESET}")
         continue
         
+        
 
 print(f"{GREEN}Your portfolio weights are equal to: {portfolio_weights}{RESET}")
 
@@ -195,3 +196,14 @@ plt.xlabel("Date")
 plt.ylabel("Indexed Value (Base 100)")
 plt.legend()
 plt.show()
+# restart the programm if the user wants to create another portfolio
+while True:
+    restart = input("Do you want to create another portfolio? (YES/NO): ")
+    if restart == "YES":
+        exec(open("main.py").read())
+        break
+    elif restart == "NO":
+        print("Thank you for using Piontek & Poulard. Goodbye!")
+        break
+    else:
+          print(f"{RED}Invalid input, please type yes or no{RESET}")

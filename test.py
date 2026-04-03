@@ -17,6 +17,6 @@ portfolio = ["AAPL","MSFT","NVDA"]
 portfolio_weights = {'AAPL': np.float64(0.3333333333333333), 'MSFT': np.float64(0.3333333333333333), 'NVDA': np.float64(0.3333333333333333)}
 start_date = datetime.strptime("2004-01-01", "%Y-%m-%d")
 end_date  = datetime.strptime("2026-01-01", "%Y-%m-%d")
-
+investment_amount = float(input("10000"))
 
 

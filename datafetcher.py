@@ -16,9 +16,7 @@ def isin_converter(isin: str ) -> str:
         data = response.json()
 
         if data and "data" in data[0] and len(data[0]["data"]) > 0:
-            for item in data[0]["data"]:
-                if item.get("exchCode") == "UW":
-                     return item["ticker"]
+            return data[0]["data"][0]["ticker"]
         else:
             return None
     except Exception as e:

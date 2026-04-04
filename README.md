@@ -35,6 +35,9 @@ optimal_portfolio/
   requirements.txt     
    README.md
 
+## Limitations
+- Le programme ne reconnait seulement des ISIN américaines
+
 ## Packages
 - yfinance
 - pandas
